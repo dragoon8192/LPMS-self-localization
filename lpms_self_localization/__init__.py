@@ -17,7 +17,7 @@ def main():
     quat = q.as_quat_array( df[['QuatW', 'QuatX', 'QuatY', 'QuatZ']] . to_numpy() )
     linAcc = df[['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']] . to_numpy()
 
-    glbLinAcc = g * q.as_vector_part( quat * q.from_vector_part( linAcc ) * quat.conjugate() )
+    glbLinAcc = g * q.as_vector_part( quat.conjugate() * q.from_vector_part( linAcc ) * quat )
     glbLinVel = integrate.cumtrapz( glbLinAcc, time, axis=0, initial=0 )
     glbPos = integrate.cumtrapz( glbLinVel, time, axis=0, initial=0 )
 
@@ -26,7 +26,7 @@ def main():
     dfGlbLinVel = pd.DataFrame( data=glbLinVel,
             columns=['GlbLinVelX (m/s)', 'GlbLinVelY (m/s)', 'GlbLinVelZ (m/s)'] )
     dfGlbPos = pd.DataFrame( data=glbPos,
-            columns=['GlbPosX (m/s)', 'GlbPosY (m/s)', 'GlbPosZ (m/s)'] )
+            columns=['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)'] )
 
     dfGlb = pd.concat( [ df, dfGlbLinAcc, dfGlbLinVel, dfGlbPos ], axis=1 )
 
