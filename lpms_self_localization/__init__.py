@@ -30,7 +30,7 @@ def main():
 
     dfGlb = pd.concat( [ df, dfGlbLinAcc, dfGlbLinVel, dfGlbPos ], axis=1 )
 
-    print(dfGlb)
+    dfGlb.to_csv( sys.stdout )
 
 if __name__ == '__main__':
     main()
