@@ -41,13 +41,20 @@ def plot6(df):
     return fig, axes
 
 def main():
-    g = 9.80665
+    # 標準入力の csv から、必要な列を DataFrame に
     df = pd.read_csv( sys.stdin, engine='python', sep=',\s+',
             usecols=['TimeStamp (s)', 'FrameNumber',
                 'QuatW', 'QuatX', 'QuatY', 'QuatZ',
-                'LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)' ])
+                'LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)' ] )
+    # TimeStamp 列を Float から DateTime に変換し、 index に指定
+    df.index = pd.to_datetime( df['TimeStamp (s)'], unit='s' ) . rename('DateTime')
+
+    # 重力加速度
+    g = 9.80665
+    # データのサンプリング周期として TimeStamp の差分の最頻値を取る
+    samplingCycle = df['TimeStamp (s)'] . diff() . mode() [0]
     dfTime = df['TimeStamp (s)']
-    time = dfTime . to_numpy()
+    time = dfTime.to_numpy()
     dfQuat = df[['QuatW', 'QuatX', 'QuatY', 'QuatZ']]
     quat = q.as_quat_array( dfQuat . to_numpy() )
     linAcc = df[['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']] . to_numpy()
@@ -65,17 +72,18 @@ def main():
 
     dfGlb = pd.concat( [ df, dfGlbLinAcc, dfGlbLinVel, dfGlbPos ], axis=1 )
 
-    interpolateLinAcc = interpolate.interp1d( time, glbLinAcc, kind='cubic' )
+    # interpolateLinAcc = interpolate.interp1d( time, glbLinAcc, kind='cubic' )
 
     # fig, ax = plot6( dfGlb )
 
-    dfPlt = pd.concat( [ dfTime, dfGlbLinAcc ], axis=1 )
-    fig, ax = plot1(dfPlt)
-    fig.savefig('out/tmp.png')
+    # dfPlt = pd.concat( [ dfTime, dfGlbLinAcc ], axis=1 )
+    # fig, ax = plot1(dfPlt)
+    # fig.savefig('out/tmp.png')
 
+    print(dfGlb)
 
     # stdout
-    dfGlb.to_csv( sys.stdout )
+    # dfGlb.to_csv( sys.stdout )
 
 if __name__ == '__main__':
     main()
