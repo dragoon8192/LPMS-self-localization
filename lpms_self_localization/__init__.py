@@ -4,8 +4,41 @@ import pandas as pd
 import numpy as np
 import quaternion as q
 from scipy import integrate
+from scipy import interpolate
+from matplotlib import pyplot as plt
 
 __version__ = '0.1.0'
+
+def plotInit():
+    # フォント指定
+    plt.rcParams['font.size'] = 10
+    plt.rcParams['font.family'] = 'Times New Roman'
+
+    # 目盛を内側に
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+
+
+def plot1(df):
+    plotInit()
+    fig, ax= plt.subplots()
+    df . plot( ax=ax, x='TimeStamp (s)' )
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
+    return fig, ax
+
+def plot6(df):
+    plotInit()
+
+    # Figure インスタンスを作成
+    fig, axes = plt.subplots(2, 3, figsize=(12,7))
+    df[['TimeStamp (s)', 'GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']] . plot( ax=axes[0][0], x='TimeStamp (s)' )
+
+    for axarr in axes:
+        for ax in axarr:
+            ax.xaxis.set_ticks_position('both')
+            ax.yaxis.set_ticks_position('both')
+    return fig, axes
 
 def main():
     g = 9.80665
@@ -13,8 +46,10 @@ def main():
             usecols=['TimeStamp (s)', 'FrameNumber',
                 'QuatW', 'QuatX', 'QuatY', 'QuatZ',
                 'LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)' ])
-    time = df['TimeStamp (s)'] . to_numpy()
-    quat = q.as_quat_array( df[['QuatW', 'QuatX', 'QuatY', 'QuatZ']] . to_numpy() )
+    dfTime = df['TimeStamp (s)']
+    time = dfTime . to_numpy()
+    dfQuat = df[['QuatW', 'QuatX', 'QuatY', 'QuatZ']]
+    quat = q.as_quat_array( dfQuat . to_numpy() )
     linAcc = df[['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']] . to_numpy()
 
     glbLinAcc = g * q.as_vector_part( quat.conjugate() * q.from_vector_part( linAcc ) * quat )
@@ -30,6 +65,16 @@ def main():
 
     dfGlb = pd.concat( [ df, dfGlbLinAcc, dfGlbLinVel, dfGlbPos ], axis=1 )
 
+    interpolateLinAcc = interpolate.interp1d( time, glbLinAcc, kind='cubic' )
+
+    # fig, ax = plot6( dfGlb )
+
+    dfPlt = pd.concat( [ dfTime, dfGlbLinAcc ], axis=1 )
+    fig, ax = plot1(dfPlt)
+    fig.savefig('out/tmp.png')
+
+
+    # stdout
     dfGlb.to_csv( sys.stdout )
 
 if __name__ == '__main__':
