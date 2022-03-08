@@ -45,6 +45,9 @@ def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, returnC
     return pd.DataFrame( data=rotatedVect, index=index, columns=returnCols )
 
 def main():
+    # 重力加速度
+    g = 9.80665
+    # 列名
     TimeStamp   = 'TimeStamp (s)'
     Quats       = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
     LinAccs     = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
@@ -57,13 +60,20 @@ def main():
             usecols=['TimeStamp (s)',
                 'QuatW', 'QuatX', 'QuatY', 'QuatZ',
                 'LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)' ] )
-    # TimeStamp 列を Float から DateTime に変換し、 index に指定
-    df.index = pd.to_datetime( df[ TimeStamp ], unit='s' ) . rename('DateTime')
 
-    # 重力加速度
-    g = 9.80665
-    # データのサンプリング周期として TimeStamp の差分の最頻値を取る
-    samplingCycle = str( round( 1000 * df[ TimeStamp ] . diff() . mode() [0] ) ) + 'ms'
+    # TimeStamp 列を float (s) から int (ns) に変換し、 index に指定
+    ns = round( df[ TimeStamp ] * 1000000 ) . rename( 'TimeStamp (ns)' ) . astype(int)
+    df.index = ns
+
+    # データのサンプリング周期として TimeStamp (ns) の差分の最頻値を取る
+    samplingCycle = int( ns . diff() . mode() [0] )
+    samplingTime = ns . iloc[-1]
+    # クォータニオンによる回転を行い，グローバル座標での加速度を得る
+    glbLinAcc = g * dfQuatRotation( df, LinAccs, Quats, GlbLinAccs )
+    # データの抜けを補完
+    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method='quadratic' , axis='index' )
+
+    print( glbLinAcc )
 
     dfTime = df['TimeStamp (s)']
     time = dfTime.to_numpy()
@@ -89,11 +99,7 @@ def main():
     # dfPlt = pd.concat( [ dfTime, dfGlbLinAcc ], axis=1 )
     # fig, ax = plot1(dfPlt)
     # fig.savefig('out/tmp.png')
-    glbLinAcc2 = g * dfQuatRotation( df, LinAccs, Quats, GlbLinAccs ) . resample( samplingCycle ) . interpolate( method='quadratic' )
 
-
-
-    print( glbLinAcc2 )
     print( dfGlbLinAcc )
 
     # stdout
