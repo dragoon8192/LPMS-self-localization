@@ -20,7 +20,8 @@ def plotInit():
 def plot1(df):
     plotInit()
     fig, ax= plt.subplots()
-    df . plot( ax=ax, x='TimeStamp (s)' )
+    # df . plot( ax=ax, x='TimeStamp (s)' )
+    df.plot(ax=ax)
     ax.xaxis.set_ticks_position('both')
     ax.yaxis.set_ticks_position('both')
     return fig, ax
@@ -38,72 +39,57 @@ def plot6(df):
     return fig, axes
 
 def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, returnCols : list ):
+    # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
     index = df.index
     vect = df[vectCols].to_numpy()
     quat = q.as_quat_array( df[quatCols].to_numpy() )
     rotatedVect = q.as_vector_part( quat.conjugate() * q.from_vector_part( vect ) * quat )
     return pd.DataFrame( data=rotatedVect, index=index, columns=returnCols )
 
+def dfIntegrate( df : pd.DataFrame, returnCols : list ):
+    # DataFrame を index/1000000 で積分する
+    # index の単位を ns とすることで時間積分となる
+    index = df.index
+    arr = df.to_numpy()
+    arrInt = integrate.cumtrapz(arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
+    return pd.DataFrame( data=arrInt, index=index, columns=returnCols )
+
 def main():
     # 重力加速度
     g = 9.80665
     # 列名
-    TimeStamp   = 'TimeStamp (s)'
-    Quats       = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
-    LinAccs     = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
-    GlbLinAccs  = ['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']
-    GlbLinVels  = ['GlbLinVelX (m/s)', 'GlbLinVelY (m/s)', 'GlbLinVelZ (m/s)']
-    GlbPoss     = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
+    sTimeStamp   = 'TimeStamp (s)'
+    sQuats       = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
+    sLinAccs     = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
+    sGlbLinAccs  = ['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']
+    sGlbVels     = ['GlbVelX (m/s)', 'GlbVelY (m/s)', 'GlbVelZ (m/s)']
+    sGlbPoss     = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
+    # 補完方法
+    method = 'cubic'
 
     # 標準入力の csv から、必要な列を DataFrame に
-    df = pd.read_csv( sys.stdin, engine='python', sep=',\s+',
-            usecols=['TimeStamp (s)',
-                'QuatW', 'QuatX', 'QuatY', 'QuatZ',
-                'LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)' ] )
+    df = pd.read_csv( sys.stdin, engine='python', sep=',\s+' )
 
     # TimeStamp 列を float (s) から int (ns) に変換し、 index に指定
-    ns = round( df[ TimeStamp ] * 1000000 ) . rename( 'TimeStamp (ns)' ) . astype(int)
+    ns = round( df[ sTimeStamp ] * 1000000 ) . rename( 'TimeStamp (ns)' ) . astype(int)
     df.index = ns
-
     # データのサンプリング周期として TimeStamp (ns) の差分の最頻値を取る
     samplingCycle = int( ns . diff() . mode() [0] )
     samplingTime = ns . iloc[-1]
     # クォータニオンによる回転を行い，グローバル座標での加速度を得る
-    glbLinAcc = g * dfQuatRotation( df, LinAccs, Quats, GlbLinAccs )
+    glbLinAcc = g * dfQuatRotation( df, sLinAccs, sQuats, sGlbLinAccs )
     # データの抜けを補完
-    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method='quadratic' , axis='index' )
+    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=method , axis='index' )
+    # 時間積分
+    glbVel = dfIntegrate( glbLinAcc, sGlbVels )
+    glbPos = dfIntegrate( glbVel, sGlbPoss )
 
-    print( glbLinAcc )
-
-    dfTime = df['TimeStamp (s)']
-    time = dfTime.to_numpy()
-    dfQuat = df[['QuatW', 'QuatX', 'QuatY', 'QuatZ']]
-    quat = q.as_quat_array( dfQuat . to_numpy() )
-    linAcc = df[['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']] . to_numpy()
-
-    glbLinAcc = g * q.as_vector_part( quat.conjugate() * q.from_vector_part( linAcc ) * quat )
-    glbLinVel = integrate.cumtrapz( glbLinAcc, time, axis=0, initial=0 )
-    glbPos = integrate.cumtrapz( glbLinVel, time, axis=0, initial=0 )
-
-    dfGlbLinAcc = pd.DataFrame( data=glbLinAcc,
-            columns=['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)'] )
-    dfGlbLinVel = pd.DataFrame( data=glbLinVel,
-            columns=['GlbLinVelX (m/s)', 'GlbLinVelY (m/s)', 'GlbLinVelZ (m/s)'] )
-    dfGlbPos = pd.DataFrame( data=glbPos,
-            columns=['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)'] )
-
-    # dfGlb = pd.concat( [ df, dfGlbLinAcc, dfGlbLinVel, dfGlbPos ], axis=1 )
-
-    # fig, ax = plot6( dfGlb )
-
-    # dfPlt = pd.concat( [ dfTime, dfGlbLinAcc ], axis=1 )
-    # fig, ax = plot1(dfPlt)
-    # fig.savefig('out/tmp.png')
-
-    print( dfGlbLinAcc )
-
+    dfReturn = pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 )
     # stdout
-    # dfGlb.to_csv( sys.stdout )
+    # dfReturn.to_csv( sys.stdout )
+
+    fig, ax = plot1( glbPos )
+    fig.savefig('out/tmp.png')
 
 if __name__ == '__main__':
     main()
