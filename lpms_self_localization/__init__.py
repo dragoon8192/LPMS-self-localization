@@ -5,11 +5,13 @@ import numpy as np
 import quaternion as q
 from scipy import integrate
 from scipy import interpolate
+from scipy import fftpack as fft
 from matplotlib import pyplot as plt
 
 __version__ = '0.1.0'
 
 def plotInit():
+    # plot 初期化
     # フォント指定
     plt.rcParams['font.size'] = 10
     plt.rcParams['font.family'] = 'Times New Roman'
@@ -38,21 +40,28 @@ def plot6(df):
             ax.yaxis.set_ticks_position('both')
     return fig, axes
 
-def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, returnCols : list ):
+def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColNames : list ):
     # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
     index = df.index
     vect = df[vectCols].to_numpy()
     quat = q.as_quat_array( df[quatCols].to_numpy() )
     rotatedVect = q.as_vector_part( quat.conjugate() * q.from_vector_part( vect ) * quat )
-    return pd.DataFrame( data=rotatedVect, index=index, columns=returnCols )
+    return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
 
-def dfIntegrate( df : pd.DataFrame, returnCols : list ):
+def dfIntegrate( df : pd.DataFrame, newColNames : list ):
     # DataFrame を index/1000000 で積分する
     # index の単位を ns とすることで時間積分となる
     index = df.index
     arr = df.to_numpy()
-    arrInt = integrate.cumtrapz(arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
-    return pd.DataFrame( data=arrInt, index=index, columns=returnCols )
+    arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
+    return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
+
+def dfFFT( df : pd.DataFrame, newIndexName):
+    index = df.index . rename( newIndexName )
+    columns = df.columns
+    arr = df.to_numpy()
+    arrFFT = fft.fft( arr, axis=0 )
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns )
 
 def main():
     # 重力加速度
@@ -65,7 +74,7 @@ def main():
     sGlbVels     = ['GlbVelX (m/s)', 'GlbVelY (m/s)', 'GlbVelZ (m/s)']
     sGlbPoss     = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
     # 補完方法
-    method = 'cubic'
+    method = 'linear'
 
     # 標準入力の csv から、必要な列を DataFrame に
     df = pd.read_csv( sys.stdin, engine='python', sep=',\s+' )
@@ -84,11 +93,13 @@ def main():
     glbVel = dfIntegrate( glbLinAcc, sGlbVels )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
 
-    dfReturn = pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 )
-    # stdout
-    # dfReturn.to_csv( sys.stdout )
+    # stdout に csv
+    # pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 ) . to_csv( sys.stdout )
 
-    fig, ax = plot1( glbPos )
+    fftLinAcc = abs( dfFFT( glbLinAcc, 'Frequency (nHz)' ) )
+    print( glbLinAcc )
+    print( fftLinAcc )
+    fig, ax = plot1( fftLinAcc )
     fig.savefig('out/tmp.png')
 
 if __name__ == '__main__':
