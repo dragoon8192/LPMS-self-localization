@@ -57,21 +57,35 @@ def dfIntegrate( df : pd.DataFrame, newColNames : list ):
     arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
     return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
 
-def dfFFT( df : pd.DataFrame, newIndexName):
-    index = df.index . rename( newIndexName )
+def dfFFT( df : pd.DataFrame, fSample ):
+    # index を float (Hz) に
+    index = pd.Index( np.linspace( 0, fSample, len(df) ), name='Frequency (Hz)' )
     columns = df.columns
     arr = df.to_numpy()
     arrFFT = fft.fft( arr, axis=0 )
-    return pd.DataFrame( data=arrFFT, index=index, columns=columns )
+    # ナイキスト周波数以降は切り捨て
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )). query('index <= 10' )
 
-def dfFilter( df : pd.DataFrame, fs ):
-    return df
+def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
+    index = df.index
+    columns = df.columns
+    arr = df.to_numpy()
+    fNiquist = fSample / 2
+    wPass = fPass / fNiquist
+    wStop = fStop / fNiquist
+    gPass = 3
+    gStop = 40
+    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
+    b, a = signal.butter( N, Wn, bType)
+    arrFilt = signal.filtfilt(b, a, arr, axis=0)
+    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
 
 def main():
     # 重力加速度
     g = 9.80665
     # 列名
     sTimeStamp   = 'TimeStamp (s)'
+    sTimeStampMicroS   = 'TimeStamp (micro s)'
     sQuats       = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
     sLinAccs     = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
     sGlbLinAccs  = ['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']
@@ -84,27 +98,31 @@ def main():
     dfInput = pd.read_csv( sys.stdin, engine='python', sep=',\s+' )
 
     # TimeStamp 列を float (s) から int (micro s) に変換し、 index に指定
-    timeStampMicroS= round( dfInput[ sTimeStamp ] * 1000000 ) . rename( 'TimeStamp (micro s)' ) . astype(int)
+    timeStampMicroS= round( dfInput[ sTimeStamp ] * 1000000 ) . rename( sTimeStampMicroS ) . astype(int)
     dfInput.index = timeStampMicroS
-    # データのサンプリング周期として TimeStamp (micro s) の差分の最頻値を取る
+    # データのサンプリング周期 (micro s) として TimeStamp (micro s) の差分の最頻値を取る
     samplingCycle = int( timeStampMicroS. diff() . mode() [0] )
+    # サンプリング周波数 (Hz)
     samplingFreq = int( 1000000 / samplingCycle )
     samplingTime = timeStampMicroS. iloc[-1]
     # クォータニオンによる回転を行い，グローバル座標での加速度を得る
     glbLinAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbLinAccs )
-    # データの抜けを補完
+    # データの抜けを method に従い補完
     glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=method , axis='index' )
     # 時間積分
+    # glbLinAcc = dfFilter( glbLinAcc, samplingFreq )
     glbVel = dfIntegrate( glbLinAcc, sGlbVels )
+    glbVel = dfFilter( glbVel, samplingFreq, 1.0, 0.5, 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
+    glbPos = dfFilter( glbPos, samplingFreq, 1.0, 0.5, 'high' )
 
     # stdout に csv
     # pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 ) . to_csv( sys.stdout )
 
-    fftLinAcc = abs( dfFFT( glbLinAcc, 'Frequency (nHz)' ) )
-    fftVel = abs( dfFFT( glbVel, 'Frequency (nHz)' ) )
-    fftPos = abs( dfFFT( glbPos, 'Frequency (nHz)' ) )
-    fig, ax = plot6( [glbLinAcc, glbVel, glbPos, fftLinAcc.query('index <= 1000000'), fftVel.query('index <= 1000000'), fftPos.query('index <= 1000000')] )
+    fftAcc = abs( dfFFT( glbLinAcc, samplingFreq ) )
+    fftVel = abs( dfFFT( glbVel, samplingFreq ) )
+    fftPos = abs( dfFFT( glbPos, samplingFreq ) )
+    fig, ax = plot6( [glbLinAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
     fig.savefig('out/tmp.png')
 
 if __name__ == '__main__':
