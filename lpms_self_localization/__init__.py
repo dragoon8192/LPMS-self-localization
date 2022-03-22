@@ -8,8 +8,6 @@ from scipy import integrate
 from scipy import signal
 from matplotlib import pyplot as plt
 
-__version__ = '0.1.0'
-
 def plotInit():
     # plot 初期化
     # フォント指定
@@ -64,7 +62,7 @@ def dfFFT( df : pd.DataFrame, fSample ):
     arr = df.to_numpy()
     arrFFT = fft.fft( arr, axis=0 )
     # ナイキスト周波数以降は切り捨て
-    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )). query('index <= 10' )
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )). query('index <= 5' )
 
 def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
     index = df.index
@@ -93,10 +91,8 @@ def main():
     sGlbPoss     = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
     # 補完方法
     method = 'linear'
-
     # 標準入力の csv から、必要な列を DataFrame に
     dfInput = pd.read_csv( sys.stdin, engine='python', sep=',\s+' )
-
     # TimeStamp 列を float (s) から int (micro s) に変換し、 index に指定
     timeStampMicroS= round( dfInput[ sTimeStamp ] * 1000000 ) . rename( sTimeStampMicroS ) . astype(int)
     dfInput.index = timeStampMicroS
@@ -110,11 +106,11 @@ def main():
     # データの抜けを method に従い補完
     glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=method , axis='index' )
     # 時間積分
-    # glbLinAcc = dfFilter( glbLinAcc, samplingFreq )
+    glbLinAcc = dfFilter( glbLinAcc, samplingFreq, 0.3, 0.1, 'high' )
     glbVel = dfIntegrate( glbLinAcc, sGlbVels )
-    glbVel = dfFilter( glbVel, samplingFreq, 1.0, 0.5, 'high' )
+    glbVel = dfFilter( glbVel, samplingFreq, 0.3, 0.1, 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
-    glbPos = dfFilter( glbPos, samplingFreq, 1.0, 0.5, 'high' )
+    glbPos = dfFilter( glbPos, samplingFreq, 0.3, 0.1, 'high' )
 
     # stdout に csv
     # pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 ) . to_csv( sys.stdout )
