@@ -20,7 +20,7 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 ### 本体の充電
 
 |      |LED         |色|バッテリー|
-|------|------------|--|----------|
+|------|:----------:|--|---------:|
 |未接続|点滅        |青|> 10%     |
 |      |            |赤|< 10%     |
 |接続  |ゆっくり点滅|青|> 10%     |
@@ -40,5 +40,6 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 ### LPMS-Control の設定
 
-LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png)を選択する．
+LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png "Add / remove sensor")を選択する．
+「Scan devices」から，上で接続したデバイスを選択し，「Add device」を実行する．
 
