@@ -12,8 +12,10 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 ## 実行環境
 
-|OS      |Windows10   |
-|Language|Python3.10.2|
+- OS
+    - Windows10
+- 言語
+    - Python3.10.2
 
 ## LPMS-B2 の操作説明
 
