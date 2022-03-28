@@ -6,10 +6,6 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 このプログラムは LPMS-B2 のデータから位置を推定する．
 
-## LPMS-B2 について
-
-詳しくは[公式サイト](https://lp-research.com/9-axis-bluetooth-imu-lpmsb2-series/)を参照．
-
 ## 実行環境
 
 - OS
@@ -18,6 +14,8 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
     - Python3.10.2
 
 ## LPMS-B2 の操作説明
+
+詳しくは[公式サイト](https://lp-research.com/9-axis-bluetooth-imu-lpmsb2-series/)を参照．
 
 ### 本体の充電
 
@@ -36,9 +34,11 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 「設定」 > 「デバイス」 > 「Bluetooth とその他のデバイス」のの順で選択する．
 「Bluetooth またはその他のデバイスを追加する」から「LPMSB2-xxxxxx」を追加する．
 
-### LPMS - Control のインストール
+### LPMS-Control のインストール
 
-<https://lp-software-downloads.s3-ap-northeast-1.amazonaws.com/LPMS/LPMS-Control/OpenMAT-1.3.5-Setup-Build20180418.exe> からインストーラーをダウンロードし，指示に従う．
+[インストーラー](https://lp-software-downloads.s3-ap-northeast-1.amazonaws.com/LPMS/LPMS-Control/OpenMAT-1.3.5-Setup-Build20180418.exe)をダウンロードし，指示に従う．
 
+### LPMS-Control の設定
 
+LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png)を選択する．
 
