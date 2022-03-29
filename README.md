@@ -6,9 +6,13 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 このプログラム「 **LPMS-self-localization** 」は LPMS-B2 のデータから位置を推定する．
 
-```terminal
+```sh
 $ < in.csv | ./lpms-self-localization | out.csv
-# または
+```
+
+または
+
+```sh
 $ ./lpms-self-localization in.csv -o out.csv
 ```
 
