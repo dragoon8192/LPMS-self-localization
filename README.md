@@ -31,9 +31,9 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 ### Windows 設定
 
-「設定」 > 「デバイス」 > 「Bluetooth とその他のデバイス」のの順で選択する．
-「Bluetooth またはその他のデバイスを追加する」から「LPMSB2-xxxxxx」を追加する．
-接続時，PINコードの入力を求められた場合，「1234」を入力する．
+「 **設定** 」 > 「 **デバイス** 」 > 「 **Bluetooth とその他のデバイス** 」のの順で選択する．
+「 **Bluetooth またはその他のデバイスを追加する** 」から「 **LPMSB2-xxxxxx** 」を追加する．
+接続時，PINコードの入力を求められた場合，「 **1234** 」を入力する．
 
 ### LPMS-Control のインストール
 
@@ -43,11 +43,11 @@ LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセン
 
 LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png "Add / remove sensor")を選択する．
 
-「Scan devices」から，上で接続したデバイスを選択し，「Add device」を実行する．
+「 **Scan devices** 」から，上で接続したデバイスを選択し，「 **Add device** 」を実行する．
 
 ツールバーの![Connect](./img/icons/bolt_32x32.png)を選択し，接続を行う．
 
-ウィンドウの左側「Connected devices」に，接続済みのデバイス一覧が表示される．
+ウィンドウの左側「 **Connected devices** 」に，接続済みのデバイス一覧が表示される．
 これをクリックすると，デバイスごとに計測についての設定ができる．
 
 ### 計測の実行
