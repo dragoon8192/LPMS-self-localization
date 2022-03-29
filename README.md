@@ -46,10 +46,8 @@ LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons
 
 ツールバーの![Connect](./img/icons/bolt_32x32.png)を選択し，接続を行う．
 
-:::note info
 ウィンドウの左側「Connected devices」に，接続済みのデバイス一覧が表示される．
 これをクリックすると，デバイスごとに計測についての設定ができる．
-:::
 
 ### 計測の実行
 
