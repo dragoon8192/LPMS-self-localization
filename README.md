@@ -81,3 +81,5 @@ LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons
 ---
 
 ## LPMS-self-localization によるデータの処理
+
+![flowchart](./img/flowchart.svg)
