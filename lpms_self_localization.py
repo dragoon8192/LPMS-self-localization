@@ -51,13 +51,11 @@ def main():
         samplingFreq  : int = args.freq
         samplingCycle : int = int( 1000000 / samplingFreq )
     samplingTime : int = timeStampMicroS. iloc[-1]
-    # 補完方法
-    interpolateMethod = args.interpolate
 
     # クォータニオンによる回転を行い，グローバル座標での加速度を得る
     glbLinAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbLinAccs )
     # データの抜けを args に従い補完
-    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=interpolateMethod , axis='index' )
+    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
     # フィルタリングと時間積分を繰り返して速度と位置を得る
     glbLinAcc = dfFilter( glbLinAcc, samplingFreq, 0.3, 0.1, 'high' )
     glbVel = dfIntegrate( glbLinAcc, sGlbVels )
@@ -68,10 +66,6 @@ def main():
     # csv を出力
     dfOutput = pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 )
     dfOutput.index = ( dfOutput.index / 1000000 ) . rename( sTimeStamp )
-    # if args.output == None:
-    #     dfOutput . to_csv( sys.stdout )
-    # else:
-    #     dfOutput . to_csv( args.output )
     dfOutput . to_csv( args.output )
 
     # plot 用
@@ -92,6 +86,7 @@ def plotInit():
     plt.rcParams['ytick.direction'] = 'in'
 
 def plot1(df):
+    # 1つのプロットを出力する
     plotInit()
     fig, ax= plt.subplots()
     df.plot(ax=ax)
