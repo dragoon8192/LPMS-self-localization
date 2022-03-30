@@ -80,6 +80,16 @@ LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons
 
 ---
 
-## LPMS-self-localization によるデータの処理
+## LPMS-self-localization の操作説明
+
+LPMS-self-localization はコマンドラインアプリケーションである．
+
+以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
+実際の環境に応じて適宜読み替えてほしい．
+
+---
+
+## LPMS-self-localization によるデータ処理について
 
 ![flowchart](./img/flowchart.svg)
+
