@@ -53,12 +53,12 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 
 ### LPMS-Control の設定
 
-LPMS-Control を起動し，ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png "Add / remove sensor")を選択する．
+インストールされた LPMS-Control を起動する．
 
+ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png "Add / remove sensor")を選択する．
 「 **Scan devices** 」から，上で接続したデバイスを選択し，「 **Add device** 」を実行する．
 
 ツールバーの![Connect](./img/icons/bolt_32x32.png)を選択し，接続を行う．
-
 ウィンドウの左側「 **Connected devices** 」に，接続済みのデバイス一覧が表示される．
 これをクリックすると，デバイスごとに計測についての設定ができる．
 
