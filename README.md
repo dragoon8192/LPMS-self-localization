@@ -1,4 +1,4 @@
-## LPMS-B2 を用いた位置推定プログラム LPMS-self-localization
+# LPMS-B2 を用いた位置推定プログラム LPMS-self-localization
 
 **LPMS-self-localization** は LPMS-B2 のデータから装置の位置を推定するプログラムである．
 
@@ -8,34 +8,22 @@
 LPMS-self-localization は LPMS-B2 の出力した加速度と姿勢のデータを入力としてうけとる．
 回転操作とフィルター，積分計算を行い，装置の速度と位置を推定して csv として出力する．
 
-## 実行環境
-
-- OS
-    - Windows10
-- 言語
-    - Python 3.10.2
-
-## 使い方
-
 ```sh
 $ < in.csv | ./lpms_self_localization.py | out.csv
 ```
 
-または
-
-```sh
-$ ./lpms_self_localization.py in.csv -o out.csv
-```
-
-オプションなどの詳しい説明は以下に示す。
-
 ---
+
+# LPMS-B2
 
 ## LPMS-B2 の操作説明
 
-詳しくは[公式サイト](https://lp-research.com/9-axis-bluetooth-imu-lpmsb2-series/)を参照．
+まず， LPMS-B2の取り扱いについて以下に示す．
+詳しくは[公式サイト](https://lp-research.com/9-axis-bluetooth-imu-lpmsb2-series/)を参照すること．
 
 ### 本体の充電
+
+USB ケーブルによって充電を行う．装置の状態と充電状況は LED に表示される．
 
 |      |LED         |色|バッテリー|
 |------|:----------:|--|---------:|
@@ -50,7 +38,7 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 ### Windows 設定
 
 **設定** > **デバイス** > **Bluetooth とその他のデバイス** の順で選択する．
-**Bluetooth またはその他のデバイスを追加する** から **LPMSB2-xxxxxx** を追加する．
+「**Bluetooth またはその他のデバイスを追加する**」 から **LPMSB2-xxxxxx** を追加する．
 （接続時 PIN コードの入力を求められた場合，**1234** を入力する．）
 
 ### LPMS-Control のインストール
@@ -86,6 +74,15 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 
 ---
 
+# LPMS-self-localization
+
+## 実行環境
+
+- OS
+    - Windows10
+- 言語
+    - Python 3.10.2
+
 ## LPMS-self-localization の操作説明
 
 LPMS-self-localization はコマンドラインアプリケーションである．
@@ -93,9 +90,7 @@ LPMS-self-localization はコマンドラインアプリケーションである
 以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
 実際の環境に応じて適宜読み替えてほしい．
 
----
-
-## LPMS-self-localization によるデータ処理について
+## LPMS-self-localization が行う処理の説明
 
 ![flowchart](./img/flowchart.svg)
 
