@@ -1,12 +1,12 @@
 ## LPMS-B2 を用いた位置推定プログラム LPMS-self-localization
 
- **LPMS-self-localization** は LPMS-B2 のデータから装置の位置を推定するプログラムである．
+**LPMS-self-localization** は LPMS-B2 のデータから装置の位置を推定するプログラムである．
 
-LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセンサーを持つ装置である．
-LPMS-B2はセンサーの測定データの時間変化に加え，測定データから計算された装置自身の姿勢（向きと回転）を csv として出力できる．
+**LPMS-B2** は加速度，角速度，磁場それぞれについて三軸のセンサーを持つ装置である．
+センサーの測定データの時間変化に加え，測定データから計算された装置自身の姿勢（向きと回転）を csv として出力できる．
 
-LPMS-self-localization は LPMS-B2 の出力した加速度と姿勢の
-データを入力としてうけとる．から速度，位置を推定するプログラムである．
+LPMS-self-localization は LPMS-B2 の出力した加速度と姿勢のデータを入力としてうけとる．
+回転操作とフィルター，積分計算を行い，装置の速度と位置を推定して csv として出力する．
 
 ## 実行環境
 
@@ -49,9 +49,9 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 
 ### Windows 設定
 
- **設定**  >  **デバイス**  >  **Bluetooth とその他のデバイス** のの順で選択する．
- **Bluetooth またはその他のデバイスを追加する** から **LPMSB2-xxxxxx** を追加する．
-（接続時 PIN コードの入力を求められた場合， **1234** を入力する．）
+**設定** > **デバイス** > **Bluetooth とその他のデバイス** の順で選択する．
+**Bluetooth またはその他のデバイスを追加する** から **LPMSB2-xxxxxx** を追加する．
+（接続時 PIN コードの入力を求められた場合，**1234** を入力する．）
 
 ### LPMS-Control のインストール
 
@@ -62,7 +62,7 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 インストールされた LPMS-Control を起動する．
 
 ツールバーの![Add / remove sensor](./img/icons/plus_32x32.png "Add / remove sensor")を選択する．
- **Scan devices** から，上で接続したデバイスを選択し， **Add device** を実行する．
+**Scan devices** から，上で接続したデバイスを選択し，**Add device** を実行する．
 
 ツールバーの![Connect](./img/icons/bolt_32x32.png)を選択し，接続を行う．
 ウィンドウの左側 **Connected devices** に，接続済みのデバイス一覧が表示される．
