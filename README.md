@@ -45,7 +45,7 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 
 「 **設定** 」 > 「 **デバイス** 」 > 「 **Bluetooth とその他のデバイス** 」のの順で選択する．
 「 **Bluetooth またはその他のデバイスを追加する** 」から「 **LPMSB2-xxxxxx** 」を追加する．
-接続時，PINコードの入力を求められた場合，「 **1234** 」を入力する．
+（接続時 PIN コードの入力を求められた場合，「 **1234** 」を入力する．）
 
 ### LPMS-Control のインストール
 
@@ -80,6 +80,16 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 
 ---
 
-## LPMS-self-localization によるデータの処理
+## LPMS-self-localization の操作説明
+
+LPMS-self-localization はコマンドラインアプリケーションである．
+
+以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
+実際の環境に応じて適宜読み替えてほしい．
+
+---
+
+## LPMS-self-localization によるデータ処理について
 
 ![flowchart](./img/flowchart.svg)
+
