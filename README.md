@@ -1,10 +1,21 @@
-# LPMS-B2 を用いた位置推定プログラム LPMS-self-localization
+## LPMS-B2 を用いた位置推定プログラム LPMS-self-localization
 
-## 概要
+「 **LPMS-self-localization** 」は LPMS-B2 のデータから装置の位置を推定するプログラムである．
 
-LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセンサーを持ち，装置の姿勢を計算して csv として出力できる．
+LPMS-B2 は加速度，角速度，磁場それぞれについて三軸のセンサーを持つ装置である．
+LPMS-B2はセンサーの測定データの時間変化に加え，測定データから計算された装置自身の姿勢（向きと回転）を csv として出力できる．
 
-このプログラム「 **LPMS-self-localization** 」は LPMS-B2 のデータから位置を推定する．
+LPMS-self-localization は LPMS-B2 の出力した加速度と姿勢の
+データを入力としてうけとる．から速度，位置を推定するプログラムである．
+
+## 実行環境
+
+- OS
+    - Windows10
+- 言語
+    - Python 3.10.2
+
+## 使い方
 
 ```sh
 $ < in.csv | ./lpms_self_localization.py | out.csv
@@ -16,12 +27,7 @@ $ < in.csv | ./lpms_self_localization.py | out.csv
 $ ./lpms_self_localization.py in.csv -o out.csv
 ```
 
-## 実行環境
-
-- OS
-    - Windows10
-- 言語
-    - Python 3.10.2
+オプションなどの詳しい説明は以下に示す。
 
 ---
 
