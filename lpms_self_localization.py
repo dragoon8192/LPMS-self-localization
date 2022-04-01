@@ -28,21 +28,21 @@ def main():
     parser.add_argument( '-o', '--output', type=argparse.FileType('w'), default=sys.stdout,
             help='推定された加速度，速度，位置のデータを csv として出力する先を指定します． 指定がなければ標準出力に出力されます．' )
     parser.add_argument( '-p', '--plot',
-            help='プロット (png) の出力先を選びます． 指定がなければ出力しません' )
+            help='プロット (png) の出力先を選びます． 指定がなければ出力しません．' )
     parser.add_argument( '-f', '--freq', type=int,
             help='入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．' )
     parser.add_argument( '-i', '--interpolate',
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
     parser.add_argument( '--acc-filter', nargs=2, default=[0.1, 0.3],
-            help='加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+            help='加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
     parser.add_argument( '--no-acc-filter', action='store_true',
             help='加速度に対するハイパスフィルターを無効化します．')
     parser.add_argument( '--vel-filter', nargs=2, default=[0.1, 0.3],
-            help='速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+            help='速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
     parser.add_argument( '--no-vel-filter', action='store_true',
             help='速度に対するハイパスフィルターを無効化します．')
     parser.add_argument( '--pos-filter', nargs=2, default=[0.1, 0.3],
-            help='位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+            help='位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
     parser.add_argument( '--no-pos-filter', action='store_true',
             help='位置に対するハイパスフィルターを無効化します．')
     args = parser.parse_args()
