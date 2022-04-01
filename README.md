@@ -101,7 +101,7 @@ LPMS-self-localization はコマンドラインアプリケーションである
 - `-f FREQ, --freq FREQ`
     - 入力データのサンプリング周波数 (Hz) を指定する． 指定がなければデータから推定する．
 - `-i INTERPOLATE, --interpolate INTERPOLATE`
-    -   抜け値の補完メソッドを指定する． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完とする．
+    -   抜け値の補完メソッドを指定する． pandas.DataFrame.interpolate によって補完が行われる． 指定がなければ線形補完とする．
 - `--acc-filter ACC_FILTER ACC_FILTER`
     -  加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定する． 指定がなければ 0.1, 0.3 とする
 - `--no-acc-filter`
