@@ -88,31 +88,31 @@ USB ケーブルによって充電を行う．装置の状態と充電状況は 
 LPMS-self-localization はコマンドラインアプリケーションである．
 
 以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
-実際の環境に応じて適宜読み替える．．
+実際の環境に応じて適宜読み替える．
 
 ### オプション
 
-- '-h, --help'
+- `-h, --help`
     - ヘルプを表示します．
-- '-o OUTPUT, --output OUTPUT'
+- `-o OUTPUT, --output OUTPUT`
     - 推定された加速度，速度，位置のデータを csv として出力する先を指定します． 指定がなければ標準出力に出力されます．
-- -p PLOT, --plot PLOT
+- `-p PLOT, --plot PLOT`
     - プロット (png) の出力先を選びます． 指定がなければ出力しません
-- -f FREQ, --freq FREQ
+- `-f FREQ, --freq FREQ`
     - 入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．
-- '-i INTERPOLATE, --interpolate INTERPOLATE'
+- `-i INTERPOLATE, --interpolate INTERPOLATE`
     -   抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．
-- '--acc-filter ACC_FILTER ACC_FILTER'
+- `--acc-filter ACC_FILTER ACC_FILTER`
     -  加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします
-- --no-acc-filter
+- `--no-acc-filter`
     - 加速度に対するハイパスフィルターを無効化します．
-- --vel-filter VEL_FILTER VEL_FILTER
+- `--vel-filter VEL_FILTER VEL_FILTER`
     - 速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします
-- --no-vel-filter
+- `--no-vel-filter`
     - 速度に対するハイパスフィルターを無効化します．
-- --pos-filter POS_FILTER POS_FILTER
+- `--pos-filter POS_FILTER POS_FILTER`
     - 位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします
-- --no-pos-filter
+- `--no-pos-filter`
     - 位置に対するハイパスフィルターを無効化します．
 
 ## LPMS-self-localization が行う処理の説明
