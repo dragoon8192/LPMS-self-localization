@@ -9,8 +9,6 @@ from scipy import integrate
 from scipy import signal
 from matplotlib import pyplot as plt
 
-__version__ = '0.1.0'
-
 def main():
     # 重力加速度
     g : float = 9.80665
@@ -19,7 +17,7 @@ def main():
     sTimeStampMicroS = 'TimeStamp (micro s)'
     sQuats           = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
     sLinAccs         = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
-    sGlbLinAccs      = ['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']
+    sGlbAccs      = ['GlbAccX (m/s^2)', 'GlbAccY (m/s^2)', 'GlbAccZ (m/s^2)']
     sGlbVels         = ['GlbVelX (m/s)', 'GlbVelY (m/s)', 'GlbVelZ (m/s)']
     sGlbPoss         = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
 
@@ -35,6 +33,7 @@ def main():
             help='入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．' )
     parser.add_argument( '-i', '--interpolate',
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
+    parser.add_argument( '-a', '--acc-filter'
     args = parser.parse_args()
 
     # 標準入力の csv から、必要な列を DataFrame に
@@ -53,27 +52,27 @@ def main():
     samplingTime : int = timeStampMicroS. iloc[-1]
 
     # クォータニオンによる回転を行い，グローバル座標での加速度を得る
-    glbLinAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbLinAccs )
+    glbAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbAccs )
     # データの抜けを args に従い補完
-    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
+    glbAcc = glbAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
     # フィルタリングと時間積分を繰り返して速度と位置を得る
-    glbLinAcc = dfFilter( glbLinAcc, samplingFreq, 0.3, 0.1, 'high' )
-    glbVel = dfIntegrate( glbLinAcc, sGlbVels )
+    glbAcc = dfFilter( glbAcc, samplingFreq, 0.3, 0.1, 'high' )
+    glbVel = dfIntegrate( glbAcc, sGlbVels )
     glbVel = dfFilter( glbVel, samplingFreq, 0.3, 0.1, 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
     glbPos = dfFilter( glbPos, samplingFreq, 0.3, 0.1, 'high' )
 
     # csv を出力
-    dfOutput = pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 )
+    dfOutput = pd.concat( [ glbAcc, glbVel, glbPos ], axis=1 )
     dfOutput.index = ( dfOutput.index / 1000000 ) . rename( sTimeStamp )
     dfOutput . to_csv( args.output )
 
     # plot 用
     if args.plot != None:
-        fftAcc = abs( dfFFT( glbLinAcc, samplingFreq ) )
+        fftAcc = abs( dfFFT( glbAcc, samplingFreq ) )
         fftVel = abs( dfFFT( glbVel, samplingFreq ) )
         fftPos = abs( dfFFT( glbPos, samplingFreq ) )
-        fig, ax = plot6( [glbLinAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
+        fig, ax = plot6( [glbAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
         fig.savefig( args.plot )
 
 def plotInit():
