@@ -17,7 +17,7 @@ def main():
     sTimeStampMicroS = 'TimeStamp (micro s)'
     sQuats           = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
     sLinAccs         = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
-    sGlbAccs      = ['GlbAccX (m/s^2)', 'GlbAccY (m/s^2)', 'GlbAccZ (m/s^2)']
+    sGlbAccs         = ['GlbAccX (m/s^2)', 'GlbAccY (m/s^2)', 'GlbAccZ (m/s^2)']
     sGlbVels         = ['GlbVelX (m/s)', 'GlbVelY (m/s)', 'GlbVelZ (m/s)']
     sGlbPoss         = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
 
@@ -29,11 +29,22 @@ def main():
             help='推定された加速度，速度，位置のデータを csv として出力する先を指定します． 指定がなければ標準出力に出力されます．' )
     parser.add_argument( '-p', '--plot',
             help='プロット (png) の出力先を選びます． 指定がなければ出力しません' )
-    parser.add_argument( '-f', '--freq',
+    parser.add_argument( '-f', '--freq', type=int,
             help='入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．' )
     parser.add_argument( '-i', '--interpolate',
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
-    parser.add_argument( '-a', '--acc-filter'
+    parser.add_argument( '--acc-filter', nargs=2, default=[0.1, 0.3],
+            help='加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-acc-filter', action='store_true',
+            help='加速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--vel-filter', nargs=2, default=[0.1, 0.3],
+            help='速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-vel-filter', action='store_true',
+            help='速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--pos-filter', nargs=2, default=[0.1, 0.3],
+            help='位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-pos-filter', action='store_true',
+            help='位置に対するハイパスフィルターを無効化します．')
     args = parser.parse_args()
 
     # 標準入力の csv から、必要な列を DataFrame に
@@ -56,11 +67,14 @@ def main():
     # データの抜けを args に従い補完
     glbAcc = glbAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
     # フィルタリングと時間積分を繰り返して速度と位置を得る
-    glbAcc = dfFilter( glbAcc, samplingFreq, 0.3, 0.1, 'high' )
+    if not no_acc_filter:
+        glbAcc = dfFilter( glbAcc, samplingFreq, acc_filter[1], acc_filter[0], 'high' )
     glbVel = dfIntegrate( glbAcc, sGlbVels )
-    glbVel = dfFilter( glbVel, samplingFreq, 0.3, 0.1, 'high' )
+    if not no_vel_filter:
+        glbVel = dfFilter( glbVel, samplingFreq, vel_filter[1], vel_filter[0], 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
-    glbPos = dfFilter( glbPos, samplingFreq, 0.3, 0.1, 'high' )
+    if not no_pos_filter:
+        glbPos = dfFilter( glbPos, samplingFreq, pos_filter[1], pos_filter[0], 'high' )
 
     # csv を出力
     dfOutput = pd.concat( [ glbAcc, glbVel, glbPos ], axis=1 )
@@ -131,7 +145,7 @@ def dfFFT( df : pd.DataFrame, fSample ):
     arr = df.to_numpy()
     arrFFT = fft.fft( arr, axis=0 )
     # ナイキスト周波数以降は切り捨て
-    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )). query('index <= 5' )
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )
 
 def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
     # バターワースフィルタリングを行う
