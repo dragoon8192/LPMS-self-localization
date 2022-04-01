@@ -67,14 +67,14 @@ def main():
     # データの抜けを args に従い補完
     glbAcc = glbAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
     # フィルタリングと時間積分を繰り返して速度と位置を得る
-    if not no_acc_filter:
-        glbAcc = dfFilter( glbAcc, samplingFreq, acc_filter[1], acc_filter[0], 'high' )
+    if not args.no_acc_filter:
+        glbAcc = dfFilter( glbAcc, samplingFreq, args.acc_filter[1], args.acc_filter[0], 'high' )
     glbVel = dfIntegrate( glbAcc, sGlbVels )
-    if not no_vel_filter:
-        glbVel = dfFilter( glbVel, samplingFreq, vel_filter[1], vel_filter[0], 'high' )
+    if not args.no_vel_filter:
+        glbVel = dfFilter( glbVel, samplingFreq, args.vel_filter[1], args.vel_filter[0], 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
-    if not no_pos_filter:
-        glbPos = dfFilter( glbPos, samplingFreq, pos_filter[1], pos_filter[0], 'high' )
+    if not args.no_pos_filter:
+        glbPos = dfFilter( glbPos, samplingFreq, args.pos_filter[1], args.pos_filter[0], 'high' )
 
     # csv を出力
     dfOutput = pd.concat( [ glbAcc, glbVel, glbPos ], axis=1 )
@@ -88,6 +88,47 @@ def main():
         fftPos = abs( dfFFT( glbPos, samplingFreq ) )
         fig, ax = plot6( [glbAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
         fig.savefig( args.plot )
+
+def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColNames : list ):
+    # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
+    index = df.index
+    vect = df[vectCols].to_numpy()
+    quat = quaternion.as_quat_array( df[quatCols].to_numpy() )
+    rotatedVect = quaternion.as_vector_part( quat.conjugate() * quaternion.from_vector_part( vect ) * quat )
+    # 回転したベクトルに新しい列名をつけて DataFrame として返す
+    return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
+
+def dfIntegrate( df : pd.DataFrame, newColNames : list ):
+    # DataFrame を index/1000000 で積分する
+    # index の単位を micro s とすることで時間積分となる
+    index = df.index
+    arr = df.to_numpy()
+    arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
+    return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
+
+def dfFFT( df : pd.DataFrame, fSample ):
+    # index を float (Hz) に
+    index = pd.Index( np.linspace( 0, fSample, len(df) ), name='Frequency (Hz)' )
+    columns = df.columns
+    arr = df.to_numpy()
+    arrFFT = fft.fft( arr, axis=0 )
+    # ナイキスト周波数以降は切り捨て
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 ))
+
+def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
+    # バターワースフィルタリングを行う
+    index = df.index
+    columns = df.columns
+    arr = df.to_numpy()
+    fNiquist = fSample / 2
+    wPass = fPass / fNiquist
+    wStop = fStop / fNiquist
+    gPass = 3
+    gStop = 40
+    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
+    b, a = signal.butter( N, Wn, bType)
+    arrFilt = signal.filtfilt(b, a, arr, axis=0)
+    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
 
 def plotInit():
     # plot 初期化
@@ -120,47 +161,6 @@ def plot6(dfs):
             ax.xaxis.set_ticks_position('both')
             ax.yaxis.set_ticks_position('both')
     return fig, axes
-
-def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColNames : list ):
-    # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
-    index = df.index
-    vect = df[vectCols].to_numpy()
-    quat = quaternion.as_quat_array( df[quatCols].to_numpy() )
-    rotatedVect = quaternion.as_vector_part( quat.conjugate() * quaternion.from_vector_part( vect ) * quat )
-    # 回転したベクトルに新しい列名をつけて DataFrame として返す
-    return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
-
-def dfIntegrate( df : pd.DataFrame, newColNames : list ):
-    # DataFrame を index/1000000 で積分する
-    # index の単位を micro s とすることで時間積分となる
-    index = df.index
-    arr = df.to_numpy()
-    arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
-    return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
-
-def dfFFT( df : pd.DataFrame, fSample ):
-    # index を float (Hz) に
-    index = pd.Index( np.linspace( 0, fSample, len(df) ), name='Frequency (Hz)' )
-    columns = df.columns
-    arr = df.to_numpy()
-    arrFFT = fft.fft( arr, axis=0 )
-    # ナイキスト周波数以降は切り捨て
-    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )
-
-def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
-    # バターワースフィルタリングを行う
-    index = df.index
-    columns = df.columns
-    arr = df.to_numpy()
-    fNiquist = fSample / 2
-    wPass = fPass / fNiquist
-    wStop = fStop / fNiquist
-    gPass = 3
-    gStop = 40
-    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
-    b, a = signal.butter( N, Wn, bType)
-    arrFilt = signal.filtfilt(b, a, arr, axis=0)
-    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
 
 if __name__ == '__main__':
     main()
