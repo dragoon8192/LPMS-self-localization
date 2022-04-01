@@ -9,8 +9,6 @@ from scipy import integrate
 from scipy import signal
 from matplotlib import pyplot as plt
 
-__version__ = '0.1.0'
-
 def main():
     # 重力加速度
     g : float = 9.80665
@@ -19,7 +17,7 @@ def main():
     sTimeStampMicroS = 'TimeStamp (micro s)'
     sQuats           = ['QuatW', 'QuatX', 'QuatY', 'QuatZ']
     sLinAccs         = ['LinAccX (g)', 'LinAccY (g)', 'LinAccZ (g)']
-    sGlbLinAccs      = ['GlbLinAccX (m/s^2)', 'GlbLinAccY (m/s^2)', 'GlbLinAccZ (m/s^2)']
+    sGlbAccs         = ['GlbAccX (m/s^2)', 'GlbAccY (m/s^2)', 'GlbAccZ (m/s^2)']
     sGlbVels         = ['GlbVelX (m/s)', 'GlbVelY (m/s)', 'GlbVelZ (m/s)']
     sGlbPoss         = ['GlbPosX (m)', 'GlbPosY (m)', 'GlbPosZ (m)']
 
@@ -31,10 +29,22 @@ def main():
             help='推定された加速度，速度，位置のデータを csv として出力する先を指定します． 指定がなければ標準出力に出力されます．' )
     parser.add_argument( '-p', '--plot',
             help='プロット (png) の出力先を選びます． 指定がなければ出力しません' )
-    parser.add_argument( '-f', '--freq',
+    parser.add_argument( '-f', '--freq', type=int,
             help='入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．' )
     parser.add_argument( '-i', '--interpolate',
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
+    parser.add_argument( '--acc-filter', nargs=2, default=[0.1, 0.3],
+            help='加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-acc-filter', action='store_true',
+            help='加速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--vel-filter', nargs=2, default=[0.1, 0.3],
+            help='速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-vel-filter', action='store_true',
+            help='速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--pos-filter', nargs=2, default=[0.1, 0.3],
+            help='位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします')
+    parser.add_argument( '--no-pos-filter', action='store_true',
+            help='位置に対するハイパスフィルターを無効化します．')
     args = parser.parse_args()
 
     # 標準入力の csv から、必要な列を DataFrame に
@@ -53,28 +63,72 @@ def main():
     samplingTime : int = timeStampMicroS. iloc[-1]
 
     # クォータニオンによる回転を行い，グローバル座標での加速度を得る
-    glbLinAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbLinAccs )
+    glbAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbAccs )
     # データの抜けを args に従い補完
-    glbLinAcc = glbLinAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
+    glbAcc = glbAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
     # フィルタリングと時間積分を繰り返して速度と位置を得る
-    glbLinAcc = dfFilter( glbLinAcc, samplingFreq, 0.3, 0.1, 'high' )
-    glbVel = dfIntegrate( glbLinAcc, sGlbVels )
-    glbVel = dfFilter( glbVel, samplingFreq, 0.3, 0.1, 'high' )
+    if not args.no_acc_filter:
+        glbAcc = dfFilter( glbAcc, samplingFreq, args.acc_filter[1], args.acc_filter[0], 'high' )
+    glbVel = dfIntegrate( glbAcc, sGlbVels )
+    if not args.no_vel_filter:
+        glbVel = dfFilter( glbVel, samplingFreq, args.vel_filter[1], args.vel_filter[0], 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
-    glbPos = dfFilter( glbPos, samplingFreq, 0.3, 0.1, 'high' )
+    if not args.no_pos_filter:
+        glbPos = dfFilter( glbPos, samplingFreq, args.pos_filter[1], args.pos_filter[0], 'high' )
 
     # csv を出力
-    dfOutput = pd.concat( [ glbLinAcc, glbVel, glbPos ], axis=1 )
+    dfOutput = pd.concat( [ glbAcc, glbVel, glbPos ], axis=1 )
     dfOutput.index = ( dfOutput.index / 1000000 ) . rename( sTimeStamp )
     dfOutput . to_csv( args.output )
 
     # plot 用
     if args.plot != None:
-        fftAcc = abs( dfFFT( glbLinAcc, samplingFreq ) )
+        fftAcc = abs( dfFFT( glbAcc, samplingFreq ) )
         fftVel = abs( dfFFT( glbVel, samplingFreq ) )
         fftPos = abs( dfFFT( glbPos, samplingFreq ) )
-        fig, ax = plot6( [glbLinAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
+        fig, ax = plot6( [glbAcc, glbVel, glbPos, fftAcc, fftVel, fftPos ] )
         fig.savefig( args.plot )
+
+def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColNames : list ):
+    # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
+    index = df.index
+    vect = df[vectCols].to_numpy()
+    quat = quaternion.as_quat_array( df[quatCols].to_numpy() )
+    rotatedVect = quaternion.as_vector_part( quat.conjugate() * quaternion.from_vector_part( vect ) * quat )
+    # 回転したベクトルに新しい列名をつけて DataFrame として返す
+    return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
+
+def dfIntegrate( df : pd.DataFrame, newColNames : list ):
+    # DataFrame を index/1000000 で積分する
+    # index の単位を micro s とすることで時間積分となる
+    index = df.index
+    arr = df.to_numpy()
+    arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
+    return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
+
+def dfFFT( df : pd.DataFrame, fSample ):
+    # index を float (Hz) に
+    index = pd.Index( np.linspace( 0, fSample, len(df) ), name='Frequency (Hz)' )
+    columns = df.columns
+    arr = df.to_numpy()
+    arrFFT = fft.fft( arr, axis=0 )
+    # ナイキスト周波数以降は切り捨て
+    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 ))
+
+def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
+    # バターワースフィルタリングを行う
+    index = df.index
+    columns = df.columns
+    arr = df.to_numpy()
+    fNiquist = fSample / 2
+    wPass = fPass / fNiquist
+    wStop = fStop / fNiquist
+    gPass = 3
+    gStop = 40
+    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
+    b, a = signal.butter( N, Wn, bType)
+    arrFilt = signal.filtfilt(b, a, arr, axis=0)
+    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
 
 def plotInit():
     # plot 初期化
@@ -107,47 +161,6 @@ def plot6(dfs):
             ax.xaxis.set_ticks_position('both')
             ax.yaxis.set_ticks_position('both')
     return fig, axes
-
-def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColNames : list ):
-    # DataFrame の vect ( 3列 ) を quat ( 4列 ) で回転する
-    index = df.index
-    vect = df[vectCols].to_numpy()
-    quat = quaternion.as_quat_array( df[quatCols].to_numpy() )
-    rotatedVect = quaternion.as_vector_part( quat.conjugate() * quaternion.from_vector_part( vect ) * quat )
-    # 回転したベクトルに新しい列名をつけて DataFrame として返す
-    return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
-
-def dfIntegrate( df : pd.DataFrame, newColNames : list ):
-    # DataFrame を index/1000000 で積分する
-    # index の単位を micro s とすることで時間積分となる
-    index = df.index
-    arr = df.to_numpy()
-    arrInt = integrate.cumtrapz( arr, x=index.to_numpy() / 1000000, axis=0, initial=0 )
-    return pd.DataFrame( data=arrInt, index=index, columns=newColNames )
-
-def dfFFT( df : pd.DataFrame, fSample ):
-    # index を float (Hz) に
-    index = pd.Index( np.linspace( 0, fSample, len(df) ), name='Frequency (Hz)' )
-    columns = df.columns
-    arr = df.to_numpy()
-    arrFFT = fft.fft( arr, axis=0 )
-    # ナイキスト周波数以降は切り捨て
-    return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 )). query('index <= 5' )
-
-def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
-    # バターワースフィルタリングを行う
-    index = df.index
-    columns = df.columns
-    arr = df.to_numpy()
-    fNiquist = fSample / 2
-    wPass = fPass / fNiquist
-    wStop = fStop / fNiquist
-    gPass = 3
-    gStop = 40
-    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
-    b, a = signal.butter( N, Wn, bType)
-    arrFilt = signal.filtfilt(b, a, arr, axis=0)
-    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
 
 if __name__ == '__main__':
     main()
