@@ -184,5 +184,35 @@ TimeStamp (s),GlbAccX (m/s^2),GlbAccY (m/s^2),GlbAccZ (m/s^2),GlbVelX (m/s),GlbV
 
 ## LPMS-self-localization が行う処理の説明
 
+LPMS-self-localization が行う処理をフローチャート図で示す．
+
 ![flowchart](./img/flowchart.svg)
+
+- extract
+`in.csv`から，ローカル座標（装置とともに回転する座標）における加速度ベクトルである`LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`列（以下，まとめて`Acc[3]`と呼ぶ）と
+姿勢を表すクォータニオンの`QuatW`, `QuatX`, `QuatY`, `QuatZ`列（以下，`Quat[4]`と呼ぶ）を取り出す．
+
+- rotate
+`Acc[3]`を`Quat[3]`によって回転し，グローバル座標（地面に固定された座標）における加速度ベクトル`GlbAcc[3]`を得る．
+
+- interpolate
+`GlbAcc[3]`の抜け値を補完し，時間の刻み幅を一定にする．
+
+- Acc filter
+`GlbAcc[3]`にバターワースフィルタリングを行う．
+
+- integrate
+`GlbAcc[3]`を積分して，速度ベクトル`GlbVel[3]`を得る．
+
+- Vel filter
+`GlbVel[3]`にバターワースフィルタリングを行う．
+
+- integrate
+`GlbVel[3]`を積分して，位置`GlbPos[3]`を得る．
+
+- Pos filter
+`GlbPos[3]`にバターワースフィルタリングを行う．
+
+- concat
+`GlbAcc[3]`, `GlbVel[3]`, `GlbPos[3]`を結合して`out.csv`とする．
 
