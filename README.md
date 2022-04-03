@@ -121,14 +121,10 @@ SensorId, TimeStamp (s), FrameNumber, AccX (g), AccY (g), AccZ (g), GyroX (deg/s
 以下の項目の列を使用する．
 
 - `TimeStamp (s)`
-- `QuatW`
-- `QuatX`
-- `QuatY`
-- `QuatZ`
-- `LinAccX (g)`
-- `LinAccY (g)`
-- `LinAccZ (g)`
-
+- `QuatW`, `QuatX`, `QuatY`, `QuatZ`
+    - 装置の姿勢を表すクォータニオン．
+- `LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`
+    - 装置のローカル座標（装置とともに回転する座標）における加速度ベクトル．
 
 ### 出力ファイル
 
@@ -147,15 +143,12 @@ TimeStamp (s),GlbAccX (m/s^2),GlbAccY (m/s^2),GlbAccZ (m/s^2),GlbVelX (m/s),GlbV
 以下の項目の列が出力される．
 
 - `TimeStamp (s)`
-- `GlbAccX (m/s^2)`
-- `GlbAccY (m/s^2)`
-- `GlbAccZ (m/s^2)`
-- `GlbVelX (m/s)`
-- `GlbVelY (m/s)`
-- `GlbVelZ (m/s)`
-- `GlbPosX (m)`
-- `GlbPosY (m)`
-- `GlbPosZ (m)`
+- `GlbAccX (m/s^2)`, `GlbAccY (m/s^2)`, `GlbAccZ (m/s^2)`
+    - 装置のグローバル座標（地面に固定された座標）における加速度ベクトル．
+- `GlbVelX (m/s)`, `GlbVelY (m/s)`, `GlbVelZ (m/s)`
+    - 装置のグローバル座標（地面に固定された座標）における速度ベクトル．
+- `GlbPosX (m)`, `GlbPosY (m)`, `GlbPosZ (m)`
+    - 装置のグローバル座標（地面に固定された座標）における位置ベクトル．
 
 ### オプションの解説
 
@@ -189,39 +182,20 @@ LPMS-self-localization が行う処理をフローチャート図で示す．
 ![flowchart](./img/flowchart.svg)
 
 1. extract
-
-    - `in.csv`から，ローカル座標（装置とともに回転する座標）における加速度ベクトルである`LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`列（以下，まとめて`Acc[3]`と呼ぶ）と
-姿勢を表すクォータニオンの`QuatW`, `QuatX`, `QuatY`, `QuatZ`列（以下，`Quat[4]`と呼ぶ）を取り出す．
-
+    - `in.csv`から，ローカル座標（装置とともに回転する座標）における加速度ベクトルである`LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`列（以下，まとめて`Acc[3]`と呼ぶ）と姿勢を表すクォータニオンの`QuatW`, `QuatX`, `QuatY`, `QuatZ`列（以下，`Quat[4]`と呼ぶ）を取り出す．
 1. rotate
-
     - `Acc[3]`を`Quat[3]`によって回転し，グローバル座標（地面に固定された座標）における加速度ベクトル`GlbAcc[3]`を得る．
-
 1. interpolate
-
     - `GlbAcc[3]`の抜け値を補完し，時間の刻み幅を一定にする．
-
 1. Acc filter
-
     - `GlbAcc[3]`にバターワースフィルタリングを行う．
-
 1. integrate
-
     - `GlbAcc[3]`を積分して，速度ベクトル`GlbVel[3]`を得る．
-
 1. Vel filter
-
     - `GlbVel[3]`にバターワースフィルタリングを行う．
-
 1. integrate
-
     - `GlbVel[3]`を積分して，位置`GlbPos[3]`を得る．
-
 1. Pos filter
-
     - `GlbPos[3]`にバターワースフィルタリングを行う．
-
 1. concat
-
     - `GlbAcc[3]`, `GlbVel[3]`, `GlbPos[3]`を結合して`out.csv`とする．
-
