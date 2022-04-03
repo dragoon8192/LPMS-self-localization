@@ -190,38 +190,38 @@ LPMS-self-localization が行う処理をフローチャート図で示す．
 
 1. extract
 
-`in.csv`から，ローカル座標（装置とともに回転する座標）における加速度ベクトルである`LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`列（以下，まとめて`Acc[3]`と呼ぶ）と
+    - `in.csv`から，ローカル座標（装置とともに回転する座標）における加速度ベクトルである`LinAccX (g)`, `LinAccY (g)`, `LinAccZ (g)`列（以下，まとめて`Acc[3]`と呼ぶ）と
 姿勢を表すクォータニオンの`QuatW`, `QuatX`, `QuatY`, `QuatZ`列（以下，`Quat[4]`と呼ぶ）を取り出す．
 
 1. rotate
 
-`Acc[3]`を`Quat[3]`によって回転し，グローバル座標（地面に固定された座標）における加速度ベクトル`GlbAcc[3]`を得る．
+    - `Acc[3]`を`Quat[3]`によって回転し，グローバル座標（地面に固定された座標）における加速度ベクトル`GlbAcc[3]`を得る．
 
 1. interpolate
 
-`GlbAcc[3]`の抜け値を補完し，時間の刻み幅を一定にする．
+    - `GlbAcc[3]`の抜け値を補完し，時間の刻み幅を一定にする．
 
 1. Acc filter
 
-`GlbAcc[3]`にバターワースフィルタリングを行う．
+    - `GlbAcc[3]`にバターワースフィルタリングを行う．
 
 1. integrate
 
-`GlbAcc[3]`を積分して，速度ベクトル`GlbVel[3]`を得る．
+    - `GlbAcc[3]`を積分して，速度ベクトル`GlbVel[3]`を得る．
 
 1. Vel filter
 
-`GlbVel[3]`にバターワースフィルタリングを行う．
+    - `GlbVel[3]`にバターワースフィルタリングを行う．
 
 1. integrate
 
-`GlbVel[3]`を積分して，位置`GlbPos[3]`を得る．
+    - `GlbVel[3]`を積分して，位置`GlbPos[3]`を得る．
 
 1. Pos filter
 
-`GlbPos[3]`にバターワースフィルタリングを行う．
+    - `GlbPos[3]`にバターワースフィルタリングを行う．
 
 1. concat
 
-`GlbAcc[3]`, `GlbVel[3]`, `GlbPos[3]`を結合して`out.csv`とする．
+    - `GlbAcc[3]`, `GlbVel[3]`, `GlbPos[3]`を結合して`out.csv`とする．
 
