@@ -90,20 +90,6 @@ LPMS-self-localization はコマンドラインアプリケーションである
 以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
 実際の環境に応じて適宜読み替える．
 
-### デフォルトの操作
-
-```sh
-$ < in.csv | ./lpms_self_localization.py | out.csv
-```
-
-または，
-
-```sh
-$ ./lpms_self_localization.py in.csv -o out.csv
-```
-
-で，処理の結果を`out.csv`に出力する．
-
 ### 入力ファイル
 
 LPMS-B2 の出力した csv を想定している．
@@ -149,6 +135,40 @@ TimeStamp (s),GlbAccX (m/s^2),GlbAccY (m/s^2),GlbAccZ (m/s^2),GlbVelX (m/s),GlbV
     - 装置のグローバル座標（地面に固定された座標）における速度ベクトル．
 - `GlbPosX (m)`, `GlbPosY (m)`, `GlbPosZ (m)`
     - 装置のグローバル座標（地面に固定された座標）における位置ベクトル．
+
+### 操作方法と例
+
+```sh
+$ < in.csv | ./lpms_self_localization.py | out.csv
+```
+
+または
+
+```sh
+$ ./lpms_self_localization.py in.csv -o out.csv
+```
+
+で，処理の結果を`out.csv`に出力する．
+
+簡単なグラフを確認したい場合は
+
+```sh
+$ ./lpms_self_localization.py in.csv -o out.csv -p plot.png
+```
+
+でプロットを`plot.png`に出力する．
+
+![plot.png](./img/circle.png)
+
+さらに，フィルタリングを行わない場合は
+
+```sh
+$ ./lpms_self_localization.py in.csv -o out.csv -p plot.png --no-acc-filter --no-vel-filter --no-pos-filter
+```
+
+のように設定する．
+
+![plot.png](./img/circle-no-filter.png)
 
 ### オプションの解説
 
