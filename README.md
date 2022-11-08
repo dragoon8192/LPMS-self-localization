@@ -21,6 +21,10 @@ $ < in.csv | ./lpms_self_localization.py | out.csv
 まず， LPMS-B2の取り扱いについて以下に示す．
 詳しくは[公式サイト](https://lp-research.com/9-axis-bluetooth-imu-lpmsb2-series/)を参照すること．
 
+### 本体の起動
+
+本体表面，中央のボタンを短く押すと電源が入り，LEDが点滅する．
+
 ### 本体の充電
 
 USB ケーブルによって充電を行う．装置の状態と充電状況は LED に表示される．
