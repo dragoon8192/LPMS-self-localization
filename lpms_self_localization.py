@@ -33,6 +33,8 @@ def main():
             help='入力データのサンプリング周波数 (Hz) を指定します． 指定がなければデータから推定します．' )
     parser.add_argument( '-i', '--interpolate',
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
+    parser.add_argument( '--no-noize-reduction', action='store_true',
+            help='ノイズ除去を無効化します．')
     args = parser.parse_args()
 
     # 標準入力の csv から、必要な列を DataFrame に
@@ -54,7 +56,10 @@ def main():
     glbAcc = g * dfQuatRotation( dfInput, sLinAccs, sQuats, sGlbAccs )
     # データの抜けを args に従い補完
     glbAcc = glbAcc . reindex( range( 0, samplingTime + 1, samplingCycle ) ) . interpolate( method=args.interpolate , axis='index' )
-    # フィルタリングと時間積分を繰り返して速度と位置を得る
+    # 絶対値が 0.1 m/s^2 未満のノイズを除去
+    if not args.no_noize_reduction:
+        glbAcc = dfNoizeReduction( glbAcc, 0.1 )
+    # 時間積分を繰り返して速度と位置を得る
     glbVel = dfIntegrate( glbAcc, sGlbVels )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
 
@@ -79,6 +84,19 @@ def dfQuatRotation( df : pd.DataFrame, vectCols : list, quatCols : list, newColN
     rotatedVect = quaternion.as_vector_part( quat.conjugate() * quaternion.from_vector_part( vect ) * quat )
     # 回転したベクトルに新しい列名をつけて DataFrame として返す
     return pd.DataFrame( data=rotatedVect, index=index, columns=newColNames )
+
+def dfNoizeReduction( df : pd.DataFrame, threshold : float ):
+    index = df.index
+    columns = df.columns
+    arr = df.to_numpy()
+    def func( xs ):
+        norm = np.linalg.norm( xs )
+        if norm >= threshold:
+            return xs
+        else:
+            return np.zeros(3)
+    arrRed = np.apply_along_axis( func, 1, arr)
+    return pd.DataFrame( data=arrRed, index=index, columns=columns )
 
 def dfIntegrate( df : pd.DataFrame, newColNames : list ):
     # DataFrame を index/1000000 で積分する
