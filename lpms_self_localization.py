@@ -35,6 +35,18 @@ def main():
             help='抜け値の補完メソッドを指定します． pandas.DataFrame.interpolate によって補完が行われます． 指定がなければ線形補完です．', default='linear' )
     parser.add_argument( '--no-noize-reduction', action='store_true',
             help='ノイズ除去を無効化します．')
+    parser.add_argument( '--acc-filter', nargs=2, default=[0.1, 0.3], type=float,
+            help='加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
+    parser.add_argument( '--no-acc-filter', action='store_true',
+            help='加速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--vel-filter', nargs=2, default=[0.1, 0.3], type=float,
+            help='速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
+    parser.add_argument( '--no-vel-filter', action='store_true',
+            help='速度に対するハイパスフィルターを無効化します．')
+    parser.add_argument( '--pos-filter', nargs=2, default=[0.1, 0.3], type=float,
+            help='位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定します． 指定がなければ 0.1, 0.3 とします．')
+    parser.add_argument( '--no-pos-filter', action='store_true',
+            help='位置に対するハイパスフィルターを無効化します．')
     args = parser.parse_args()
 
     # 標準入力の csv から、必要な列を DataFrame に
@@ -59,9 +71,15 @@ def main():
     # 絶対値が 0.1 m/s^2 未満のノイズを除去
     if not args.no_noize_reduction:
         glbAcc = dfNoizeReduction( glbAcc, 0.1 )
-    # 時間積分を繰り返して速度と位置を得る
+    # フィルタリングと時間積分を繰り返して速度と位置を得る
+    if not args.no_acc_filter:
+        glbAcc = dfFilter( glbAcc, samplingFreq, args.acc_filter[1], args.acc_filter[0], 'high' )
     glbVel = dfIntegrate( glbAcc, sGlbVels )
+    if not args.no_vel_filter:
+        glbVel = dfFilter( glbVel, samplingFreq, args.vel_filter[1], args.vel_filter[0], 'high' )
     glbPos = dfIntegrate( glbVel, sGlbPoss )
+    if not args.no_pos_filter:
+        glbPos = dfFilter( glbPos, samplingFreq, args.pos_filter[1], args.pos_filter[0], 'high' )
 
     # csv を出力
     dfOutput = pd.concat( [ glbAcc, glbVel, glbPos ], axis=1 )
@@ -115,6 +133,21 @@ def dfFFT( df : pd.DataFrame, fSample ):
     # ナイキスト周波数以降は切り捨て
     return pd.DataFrame( data=arrFFT, index=index, columns=columns ) . query('index <= ' + str( fSample/2 ))
 
+def dfFilter( df : pd.DataFrame, fSample, fPass, fStop, bType ):
+    # バターワースフィルタリングを行う
+    index = df.index
+    columns = df.columns
+    arr = df.to_numpy()
+    fNiquist = fSample / 2
+    wPass = fPass / fNiquist
+    wStop = fStop / fNiquist
+    gPass = 3
+    gStop = 40
+    N, Wn = signal.buttord( wPass, wStop, gPass, gStop )
+    b, a = signal.butter( N, Wn, bType)
+    arrFilt = signal.filtfilt(b, a, arr, axis=0)
+    return pd.DataFrame( data=arrFilt, index=index, columns=columns )
+
 def plotInit():
     # plot 初期化
     # フォント指定
@@ -123,6 +156,15 @@ def plotInit():
     # 目盛を内側に
     plt.rcParams['xtick.direction'] = 'in'
     plt.rcParams['ytick.direction'] = 'in'
+
+def plot1(df):
+    # 1つのプロットを出力する
+    plotInit()
+    fig, ax= plt.subplots()
+    df.plot(ax=ax)
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
+    return fig, ax
 
 def plot6(dfs):
     # 6つのプロットを並べる
