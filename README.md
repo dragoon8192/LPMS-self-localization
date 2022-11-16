@@ -6,10 +6,12 @@
 センサーの測定データの時間変化に加え，測定データから計算された装置自身の姿勢（向きと回転）を csv として出力できる．
 
 LPMS-self-localization は LPMS-B2 の出力した加速度と姿勢のデータを入力としてうけとる．
-回転操作とフィルター，積分計算を行い，装置の速度と位置を推定して csv として出力する．
+回転操作とノイズ除去，積分計算を行い，装置の速度と位置を推定して csv として出力する．
+
+(現在、フィルター処理は無効化している)
 
 ```sh
-$ < in.csv | ./lpms_self_localization.py | out.csv
+$ < in.csv | poetry run lpms_self_localization.py | out.csv
 ```
 
 ---
@@ -64,7 +66,7 @@ USB ケーブルによって充電を行う．装置の状態と充電状況は 
 
 #### データの記録をしない計測
 
-ツールバーの![Start measurement](./img/icons/play_24x32.png)を選択することで計測が開始し，画面のグラフが更新される．
+ツールバーの![Start measurement](./img/icons/play_24x32.png)を選択することで計測が開始し，アイコンが変化すると同時に画面のグラフが更新される．
 
 ツールバーの![Stop measurement](./img/icons/pause_24x32.png)を選択することでグラフの更新が停止される．
 
@@ -72,7 +74,7 @@ USB ケーブルによって充電を行う．装置の状態と充電状況は 
 
 ツールバーの![Browse record file](./img/icons/folder_stroke_32x32.png)を選択することで，計測データの保存先を指定する．
 
-ツールバーの![Record data](./img/icons/layers_32x28.png)を選択することでで画面のグラフが更新され，記録を開始する．
+ツールバーの![Record data](./img/icons/layers_32x28.png)を選択することでで画面のグラフが更新され，アイコンが変化すると同時に記録を開始する．
 
 ツールバーの![Stop recording](./img/icons/x_alt_32x32.png)を選択することで記録が終了し，データが保存される．
 
@@ -86,12 +88,15 @@ USB ケーブルによって充電を行う．装置の状態と充電状況は 
     - Windows10
 - 言語
     - Python 3.10.2
+- 使用ツール
+    - poetry
 
 ## LPMS-self-localization の操作説明
 
 LPMS-self-localization はコマンドラインアプリケーションである．
 
 以下，スクリプト本体である`lpms_self_localization.py`と入力ファイル`in.csv`がカレントディレクトリに存在するとして手順を解説する．
+また， poetry をつかう場合は `pyproject.toml` も同じディレクトリに必要．
 実際の環境に応じて適宜読み替える．
 
 ### 入力ファイル
@@ -141,15 +146,35 @@ TimeStamp (s),GlbAccX (m/s^2),GlbAccY (m/s^2),GlbAccZ (m/s^2),GlbVelX (m/s),GlbV
     - 装置のグローバル座標（地面に固定された座標）における位置ベクトル．
 
 ### 操作方法と例
+#### 初回起動時
+```sh
+$ python -m pip install poetry
+```
+
+で， poetry をインストールする．
 
 ```sh
-$ < in.csv | ./lpms_self_localization.py | out.csv
+$ python -m poetry install
+```
+
+で，必要なライブラリをインストールする．
+
+```sh
+$ poetry run python lpms_self_localization.py -h
+```
+
+でヘルプが表示されれば問題なし．
+
+#### 操作
+
+```sh
+$ < in.csv | poetry run python lpms_self_localization.py | out.csv
 ```
 
 または
 
 ```sh
-$ ./lpms_self_localization.py in.csv -o out.csv
+$ poetry run python lpms_self_localization.py in.csv -o out.csv
 ```
 
 で，処理の結果を`out.csv`に出力する．
@@ -157,18 +182,13 @@ $ ./lpms_self_localization.py in.csv -o out.csv
 簡単なグラフを確認したい場合は
 
 ```sh
-$ ./lpms_self_localization.py in.csv -o out.csv -p plot.png
+$ poetry run python lpms_self_localization.py in.csv -o out.csv -p plot.png
 ```
 
 でプロットを`plot.png`に出力する．
 
 ![plot.png](./img/circle.png)
 
-さらに，フィルタリングを行わない場合は
-
-```sh
-$ ./lpms_self_localization.py in.csv -o out.csv -p plot.png --no-acc-filter --no-vel-filter --no-pos-filter
-```
 
 のように設定する．
 
@@ -186,22 +206,12 @@ $ ./lpms_self_localization.py in.csv -o out.csv -p plot.png --no-acc-filter --no
     - 入力データのサンプリング周波数 (Hz) を指定する． 指定がなければデータから推定する．
 - `-i INTERPOLATE, --interpolate INTERPOLATE`
     -   抜け値の補完メソッドを指定する． pandas.DataFrame.interpolate によって補完が行われる． 指定がなければ線形補完とする．
-- `--acc-filter ACC_FILTER ACC_FILTER`
-    -  加速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定する． 指定がなければ 0.1, 0.3 とする
-- `--no-acc-filter`
-    - 加速度に対するハイパスフィルターを無効化する．
-- `--vel-filter VEL_FILTER VEL_FILTER`
-    - 速度に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定する． 指定がなければ 0.1, 0.3 とする
-- `--no-vel-filter`
-    - 速度に対するハイパスフィルターを無効化する．
-- `--pos-filter POS_FILTER POS_FILTER`
-    - 位置に対するハイパスフィルターの阻止域端周波数 [Hz] と通過域端周波数 [Hz] を指定する． 指定がなければ 0.1, 0.3 とする
-- `--no-pos-filter`
-    - 位置に対するハイパスフィルターを無効化する．
 
 ## LPMS-self-localization が行う処理の説明
 
 LPMS-self-localization が行う処理をフローチャート図で示す．
+
+(現在、フィルター処理は無効化している)
 
 ![flowchart](./img/flowchart.svg)
 
