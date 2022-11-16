@@ -187,13 +187,6 @@ $ poetry run python lpms_self_localization.py in.csv -o out.csv -p plot.png
 
 でプロットを`plot.png`に出力する．
 
-![plot.png](./img/circle.png)
-
-
-のように設定する．
-
-![plot.png](./img/circle-no-filter.png)
-
 ### オプションの解説
 
 - `-h, --help`
